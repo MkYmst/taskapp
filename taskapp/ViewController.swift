@@ -9,9 +9,10 @@
 import UIKit
 import RealmSwift
 
-class ViewController: UIViewController,UITableViewDelegate,UITableViewDataSource {
+class ViewController: UIViewController,UITableViewDelegate,UITableViewDataSource,UISearchBarDelegate {
     
     @IBOutlet weak var tableView: UITableView!
+    @IBOutlet weak var searchBar: UISearchBar!
     
     //Realmインスタンスを取得する
     let realm = try! Realm() // 追加
@@ -19,13 +20,32 @@ class ViewController: UIViewController,UITableViewDelegate,UITableViewDataSource
     //DB内のタスクが格納されるリスト。
     //日付の近い順でソート：昇順
     //以降内容をアップデートするとリスト内は自動的に更新される。
-    var taskArray = try! Realm().objects(Task.self).sorted(byKeyPath: "date", ascending: true) //追加
+    var taskArray = try! Realm().objects(Task.self).sorted(byKeyPath: "date", ascending: true)
     
     override func viewDidLoad() {
         super.viewDidLoad()
         // Do any additional setup after loading the view.
         tableView.delegate = self
         tableView.dataSource = self
+        
+        searchBar.delegate = self
+    }
+    
+    func searchBarSearchButtonClicked(_ searchBar: UISearchBar) {
+        //キーボードを閉じる
+        view.endEditing(true)
+        
+        guard let searchText = searchBar.text else {
+            return
+        }
+        
+        if searchText == ""{
+            taskArray = realm.objects(Task.self).sorted(byKeyPath: "date", ascending: true)
+            tableView.reloadData()
+        }else{
+            taskArray = taskArray.filter("category == %@",searchText).sorted(byKeyPath: "date", ascending: true)
+            tableView.reloadData()
+        }
     }
 
     //データの数（=セルの数）を返すメソッド
