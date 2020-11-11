@@ -32,19 +32,15 @@ class ViewController: UIViewController,UITableViewDelegate,UITableViewDataSource
     }
     
     func searchBarSearchButtonClicked(_ searchBar: UISearchBar) {
-        //キーボードを閉じる
-        view.endEditing(true)
         
-        guard let searchText = searchBar.text else {
-            return
-        }
-        
-        if searchText == ""{
-            taskArray = realm.objects(Task.self).sorted(byKeyPath: "date", ascending: true)
-            tableView.reloadData()
-        }else{
-            taskArray = taskArray.filter("category == %@",searchText).sorted(byKeyPath: "date", ascending: true)
-            tableView.reloadData()
+        if let searchText = searchBar.text {
+            if searchText == ""{
+                taskArray = realm.objects(Task.self).sorted(byKeyPath: "date", ascending: true)
+                tableView.reloadData()
+            }else{
+                taskArray = taskArray.filter("category == %@",searchText)
+                tableView.reloadData()
+            }
         }
     }
 
