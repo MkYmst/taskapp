@@ -10,14 +10,23 @@ import UIKit
 import RealmSwift
 import UserNotifications
 
-class InputViewController: UIViewController {
+class InputViewController: UIViewController,UIPickerViewDelegate, UIPickerViewDataSource {
+    
     @IBOutlet weak var titleTextField: UITextField!
     @IBOutlet weak var contentsTextView: UITextView!
     @IBOutlet weak var datePicker: UIDatePicker!
-    @IBOutlet weak var categoryTextField: UITextField!
+    @IBOutlet weak var categoryPicker: UIPickerView!
+    
     
     let realm = try! Realm()
     var task: Task!
+    var taskArray = try! Realm().objects(Task.self)
+    
+    var category:Category!
+    var catArray = try! Realm().objects(Category.self)
+    var calist:Array<String> = []
+    var calistID:Int = 1
+    var cateName:String = ""
     
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -25,26 +34,70 @@ class InputViewController: UIViewController {
         // 背景をタップしたらdismisskeyborardメソッドを呼ぶように設定する
         let tapGesture:UITapGestureRecognizer = UITapGestureRecognizer(target: self, action: #selector(dismissKeyboard))
         self.view.addGestureRecognizer(tapGesture)
-        
+
         titleTextField.text = task.title
         contentsTextView.text = task.contents
         datePicker.date = task.date
-        categoryTextField.text = task.category
+        
+        categoryPicker.delegate = self
+        categoryPicker.dataSource = self
+        calist = []
+        for cate in catArray{
+            calist.append(cate.name)
+        }
+
+        //UIPickerViewの初期値
+        if taskArray.count != 0{
+            categoryPicker.selectRow(taskArray[0].categorys!.id, inComponent: 0, animated: false)
+        }
     }
     
     override func viewWillDisappear(_ animated: Bool) {
+        
         try! realm.write{
             self.task.title = self.titleTextField.text!
             self.task.contents = self.contentsTextView.text
-            self.task.category = self.categoryTextField.text!
             self.task.date = self.datePicker.date
+            if cateName != ""{
+            let somecate = catArray.filter("name = %@", cateName)
+            self.task.categorys = somecate[0]
+            }
             self.realm.add(self.task, update: .modified)
         }
-        
+        if cateName != ""{
+            let somecate = catArray.filter("name = %@", cateName)
+            try! realm.write{
+                somecate[0].tasks.append(task)
+            }
+        }
         setNotification(task: task)
         
         super.viewWillDisappear(animated)
     }
+    
+    // UIPickerViewの列の数
+    func numberOfComponents(in pickerView: UIPickerView) -> Int {
+        return 1
+    }
+    
+    // UIPickerViewの行数、要素の全数
+    func pickerView(_ pickerView: UIPickerView, numberOfRowsInComponent component: Int) -> Int {
+        return catArray.count
+    }
+    
+    // UIPickerViewに表示する配列
+    func pickerView(_ pickerView: UIPickerView, titleForRow row: Int, forComponent component: Int) -> String? {
+        //return catArray[row]
+        return calist[row]
+        
+    }
+    // UIPickerViewのRowが選択された時の挙動
+    func pickerView(_ pickerView: UIPickerView, didSelectRow row: Int, inComponent component: Int) {
+        cateName = calist[row]
+        calistID = row
+        //print(cateName)
+    }
+    
     
     //タスクのローカル通知を登録する
     func setNotification(task:Task){
@@ -91,6 +144,15 @@ class InputViewController: UIViewController {
         view.endEditing(true)
     }
     
+    // 入力画面から戻ってきた時に UIPickerViewを更新させる
+    override func viewWillAppear(_ animated: Bool) {
+        super.viewWillAppear(animated)
+        calist = []
+        for cate in catArray{
+            calist.append(cate.name)
+        }
+        categoryPicker.reloadAllComponents()
+    }
 
     /*
     // MARK: - Navigation

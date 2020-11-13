@@ -9,10 +9,12 @@
 import UIKit
 import RealmSwift
 
-class ViewController: UIViewController,UITableViewDelegate,UITableViewDataSource,UISearchBarDelegate {
+//class ViewController: UIViewController,UITableViewDelegate,UITableViewDataSource,UISearchBarDelegate {
+class ViewController: UIViewController,UITableViewDelegate,UITableViewDataSource,UIPickerViewDelegate, UIPickerViewDataSource {
     
     @IBOutlet weak var tableView: UITableView!
-    @IBOutlet weak var searchBar: UISearchBar!
+    //@IBOutlet weak var searchBar: UISearchBar!
+    @IBOutlet weak var categoryPicker: UIPickerView!
     
     //Realmインスタンスを取得する
     let realm = try! Realm() // 追加
@@ -22,15 +24,26 @@ class ViewController: UIViewController,UITableViewDelegate,UITableViewDataSource
     //以降内容をアップデートするとリスト内は自動的に更新される。
     var taskArray = try! Realm().objects(Task.self).sorted(byKeyPath: "date", ascending: true)
     
+    var cateArray = try! Realm().objects(Category.self)
+    var cateList:Array<String> = []
+    var cateName:String = ""
+    
     override func viewDidLoad() {
         super.viewDidLoad()
         // Do any additional setup after loading the view.
         tableView.delegate = self
         tableView.dataSource = self
         
-        searchBar.delegate = self
+        //searchBar.delegate = self
+        categoryPicker.delegate = self
+        categoryPicker.dataSource = self
+        cateList = []
+        for cate in cateArray{
+            cateList.append(cate.name)
+        }
     }
     
+    /*
     func searchBarSearchButtonClicked(_ searchBar: UISearchBar) {
         
         if let searchText = searchBar.text {
@@ -43,13 +56,39 @@ class ViewController: UIViewController,UITableViewDelegate,UITableViewDataSource
             }
         }
     }
+ */
+    // UIPickerViewの列の数
+    func numberOfComponents(in pickerView: UIPickerView) -> Int {
+        return 1
+    }
+    
+    // UIPickerViewの行数、要素の全数
+    func pickerView(_ pickerView: UIPickerView, numberOfRowsInComponent component: Int) -> Int {
+        return cateArray.count
+    }
+    
+    // UIPickerViewに表示する配列
+    func pickerView(_ pickerView: UIPickerView, titleForRow row: Int, forComponent component: Int) -> String? {
+        //return catArray[row]
+        return cateList[row]
+    }
+    // UIPickerViewのRowが選択された時の挙動
+    func pickerView(_ pickerView: UIPickerView, didSelectRow row: Int, inComponent component: Int) {
+        cateName = cateList[row]
+        //cateName = "55"
+        print(cateList[row])        
+        taskArray = taskArray.filter("categorys.name = %@", cateName)
+        //print(taskArray)
+        tableView.reloadData()
+        //print(catArray)
+    }
 
-    //データの数（=セルの数）を返すメソッド
+    //UIPickerViewのデータの数（=セルの数）を返すメソッド
     func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
         return taskArray.count
     }
     
-    //各セルの内容を返すメソッド
+    //UITableViewの各セルの内容を返すメソッド
     func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
         //再利用可能なcellを得る
         let cell = tableView.dequeueReusableCell(withIdentifier: "Cell", for: indexPath)
@@ -67,17 +106,17 @@ class ViewController: UIViewController,UITableViewDelegate,UITableViewDataSource
         return cell
     }
     
-    //各セルを選択した時に実行されるメソッド
+    //UITableViewの各セルを選択した時に実行されるメソッド
     func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
         performSegue(withIdentifier: "cellSegue", sender: nil)
     }
     
-    //セルが削除可能なことを伝えるメソッド
+    //UITableViewのセルが削除可能なことを伝えるメソッド
     func tableView(_ tableView: UITableView, editingStyleForRowAt indexPath: IndexPath) -> UITableViewCell.EditingStyle {
         return .delete
     }
     
-    //Deleteボタンが押された時に呼ばれるメソッド
+    //UITableViewのDeleteボタンが押された時に呼ばれるメソッド
     func tableView(_ tableView: UITableView, commit editingStyle: UITableViewCell.EditingStyle, forRowAt indexPath: IndexPath) {
         
         if editingStyle == .delete{
@@ -124,12 +163,18 @@ class ViewController: UIViewController,UITableViewDelegate,UITableViewDataSource
             inputViewController.task = task
             
         }
+        
     }
     
     // 入力画面から戻ってきた時に TableViewを更新させる
     override func viewWillAppear(_ animated: Bool) {
         super.viewWillAppear(animated)
         tableView.reloadData()
+        cateList = []
+        for cate in cateArray{
+            cateList.append(cate.name)
+        }
+        categoryPicker.reloadAllComponents()
     }
 
 }

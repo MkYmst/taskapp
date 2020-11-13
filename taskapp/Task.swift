@@ -12,14 +12,14 @@ class Task: Object{
     //管理用 ID。プライマリーキー
     @objc dynamic var id = 0
     
-    //カテゴリ
-    @objc dynamic var category = ""
-    
     //タイトル
     @objc dynamic var title = ""
     
     //内容
     @objc dynamic var contents = ""
+    
+    //カテゴリ
+    @objc dynamic var categorys : Category?
     
     //日時
     @objc dynamic var date = Date()
@@ -28,4 +28,20 @@ class Task: Object{
     override static func primaryKey() -> String?{
         return "id"
     }
+}
+
+class Category: Object{
+    //管理用 ID
+    @objc dynamic var id = 0
+    
+    //カテゴリ名
+    @objc dynamic var name = ""
+    
+    let tasks = List<Task>()
+    
+    //idをプライマリーキーとして設定
+    override static func primaryKey() -> String?{
+        return "id"
+    }
+    
 }
