@@ -48,7 +48,10 @@ class InputViewController: UIViewController,UIPickerViewDelegate, UIPickerViewDa
 
         //UIPickerViewの初期値
         if taskArray.count != 0{
-            categoryPicker.selectRow(taskArray[0].categorys!.id, inComponent: 0, animated: false)
+            //カテゴリが未設定の場合のnil判定を追加
+            if let id = taskArray[0].categorys?.id{
+                categoryPicker.selectRow(id, inComponent: 0, animated: false)
+            }
         }
     }
     

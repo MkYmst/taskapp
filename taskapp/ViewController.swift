@@ -75,12 +75,11 @@ class ViewController: UIViewController,UITableViewDelegate,UITableViewDataSource
     // UIPickerViewのRowが選択された時の挙動
     func pickerView(_ pickerView: UIPickerView, didSelectRow row: Int, inComponent component: Int) {
         cateName = cateList[row]
-        //cateName = "55"
-        print(cateList[row])        
-        taskArray = taskArray.filter("categorys.name = %@", cateName)
-        //print(taskArray)
+        //タスクの絞り込み反映
+        let selectedCategory = try! Realm().objects(Category.self).filter("name == %@", cateName).first
+        taskArray = try! Realm().objects(Task.self) .filter("categorys == %@",  selectedCategory)
+        
         tableView.reloadData()
-        //print(catArray)
     }
 
     //UIPickerViewのデータの数（=セルの数）を返すメソッド
@@ -161,15 +160,14 @@ class ViewController: UIViewController,UITableViewDelegate,UITableViewDataSource
             }
             
             inputViewController.task = task
-            
         }
-        
     }
     
     // 入力画面から戻ってきた時に TableViewを更新させる
     override func viewWillAppear(_ animated: Bool) {
         super.viewWillAppear(animated)
         tableView.reloadData()
+        cateArray = try! Realm().objects(Category.self) //新規追加したカテゴリの反映
         cateList = []
         for cate in cateArray{
             cateList.append(cate.name)
